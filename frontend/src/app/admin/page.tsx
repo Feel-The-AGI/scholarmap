@@ -82,7 +82,7 @@ export default function AdminPage() {
   };
 
   const resolveReview = async (id: string) => {
-    await supabase.from("agent_reviews").update({ resolved: true }).eq("id", id);
+    await (supabase.from("agent_reviews") as ReturnType<typeof supabase.from>).update({ resolved: true }).eq("id", id);
     loadData();
   };
 

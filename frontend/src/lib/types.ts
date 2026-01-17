@@ -80,6 +80,37 @@ export type Database = {
         Insert: Omit<Database["public"]["Tables"]["profiles"]["Row"], "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
       };
+      agent_reviews: {
+        Row: {
+          id: string;
+          program_id: string;
+          issue_type: string;
+          note: string;
+          severity: "low" | "medium" | "high";
+          resolved: boolean;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["agent_reviews"]["Row"], "id" | "created_at">;
+        Update: {
+          program_id?: string;
+          issue_type?: string;
+          note?: string;
+          severity?: "low" | "medium" | "high";
+          resolved?: boolean;
+        };
+      };
+      sources: {
+        Row: {
+          id: string;
+          program_id: string;
+          url: string;
+          last_fetched_at: string;
+          content_hash: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["sources"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["sources"]["Insert"]>;
+      };
     };
   };
 };

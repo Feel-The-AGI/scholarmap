@@ -73,7 +73,7 @@ function ProgramsContent() {
       {/* Header */}
       <div className="relative py-12 px-6 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 right-[20%] w-64 h-64 rounded-full bg-linear-to-br from-primary-200/40 to-accent-200/20 blur-3xl" />
+          <div className="absolute top-0 right-[20%] w-64 h-64 rounded-full bg-linear-to-tr from-primary-200/40 to-accent-200/20 blur-3xl" />
         </div>
 
         <div className="max-w-7xl mx-auto relative">

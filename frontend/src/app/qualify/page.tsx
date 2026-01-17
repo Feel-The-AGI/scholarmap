@@ -106,7 +106,7 @@ export default function QualifyPage() {
       {/* Header */}
       <div className="relative py-12 px-6 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-[10%] w-96 h-96 rounded-full bg-linear-to-br from-accent-200/40 to-primary-200/20 blur-3xl" />
+          <div className="absolute top-0 left-[10%] w-96 h-96 rounded-full bg-linear-to-tr from-accent-200/40 to-primary-200/20 blur-3xl" />
           <div className="absolute bottom-0 right-[20%] w-64 h-64 rounded-full bg-gradient-to-tr from-primary-200/30 to-accent-200/10 blur-3xl" />
         </div>
 

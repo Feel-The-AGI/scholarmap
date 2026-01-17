@@ -68,7 +68,7 @@ export default function ProgramPage({ params }: { params: Promise<{ id: string }
       <div className="relative py-16 px-6 overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-[10%] w-96 h-96 rounded-full bg-gradient-to-br from-primary-200/30 to-accent-200/20 blur-3xl" />
+          <div className="absolute top-0 left-[10%] w-96 h-96 rounded-full bg-linear-to-br from-primary-200/30 to-accent-200/20 blur-3xl" />
           <div className="absolute bottom-0 right-[20%] w-64 h-64 rounded-full bg-gradient-to-tr from-accent-200/30 to-primary-200/10 blur-3xl" />
         </div>
 
@@ -162,7 +162,7 @@ export default function ProgramPage({ params }: { params: Promise<{ id: string }
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 }}
-                  className="p-8 rounded-3xl bg-gradient-to-br from-accent-50 to-accent-100/50 border border-accent-200"
+                  className="p-8 rounded-3xl bg-linear-to-br from-accent-50 to-accent-100/50 border border-accent-200"
                 >
                   <h2 className="text-xl font-bold text-accent-800 mb-4 flex items-center gap-3">
                     <span className="text-2xl">🏆</span>
@@ -178,7 +178,7 @@ export default function ProgramPage({ params }: { params: Promise<{ id: string }
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="p-8 rounded-3xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200"
+                  className="p-8 rounded-3xl bg-linear-to-br from-amber-50 to-amber-100/50 border border-amber-200"
                 >
                   <h2 className="text-xl font-bold text-amber-800 mb-4 flex items-center gap-3">
                     <span className="text-2xl">⚠️</span>

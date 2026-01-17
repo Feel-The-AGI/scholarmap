@@ -133,7 +133,7 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-6">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-gradient-to-br from-primary-200/30 to-accent-200/20 blur-3xl" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-linear-to-br from-primary-200/30 to-accent-200/20 blur-3xl" />
           <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-gradient-to-tr from-accent-200/30 to-primary-200/10 blur-3xl" />
         </div>
 
@@ -143,7 +143,7 @@ export default function AdminPage() {
           className="relative w-full max-w-md"
         >
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-stone-900 to-stone-800 flex items-center justify-center mx-auto mb-4 shadow-xl">
+            <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-stone-900 to-stone-800 flex items-center justify-center mx-auto mb-4 shadow-xl">
               <span className="text-2xl">🔐</span>
             </div>
             <h1 className="text-2xl font-bold text-stone-900">Admin Portal</h1>
@@ -208,7 +208,7 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-stone-900 to-stone-800 flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-stone-900 to-stone-800 flex items-center justify-center shadow-lg">
                 <span className="text-xl">⚡</span>
               </div>
               <div>
@@ -264,7 +264,7 @@ export default function AdminPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-6 rounded-3xl bg-gradient-to-br from-stone-900 to-stone-800 text-white"
+                className="p-6 rounded-3xl bg-linear-to-br from-stone-900 to-stone-800 text-white"
               >
                 <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
                   <span className="text-xl">🤖</span>

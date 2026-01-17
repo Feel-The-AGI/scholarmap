@@ -57,7 +57,7 @@ export default function Home() {
       <section className="relative min-h-[85vh] flex items-center overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 right-[10%] w-96 h-96 rounded-full bg-gradient-to-br from-primary-200/30 to-accent-200/20 blur-3xl" />
+          <div className="absolute top-1/4 right-[10%] w-96 h-96 rounded-full bg-linear-to-br from-primary-200/30 to-accent-200/20 blur-3xl" />
           <div className="absolute bottom-1/4 left-[5%] w-64 h-64 rounded-full bg-gradient-to-tr from-accent-200/30 to-primary-200/10 blur-3xl" />
         </div>
 
@@ -86,7 +86,7 @@ export default function Home() {
                 Education
               </h1>
 
-              <p className="text-lg md:text-xl text-stone-600 max-w-lg mb-8 leading-relaxed">
+              <p className="text-lg md:text-xl text-stone-300 max-w-lg mb-8 leading-relaxed">
                 Discover life-changing scholarships curated by AI, verified by humans. 
                 From Bachelor&apos;s to PhD — find your perfect match.
               </p>
@@ -118,7 +118,7 @@ export default function Home() {
               className="relative"
             >
               {/* Decorative floating element */}
-              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-3xl bg-gradient-to-br from-primary-400 to-primary-500 opacity-20 blur-2xl" />
+              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-3xl bg-linear-to-br from-primary-400 to-primary-500 opacity-20 blur-2xl" />
               
               <div className="grid grid-cols-2 gap-4">
                 {levels.map((level, i) => {
@@ -286,7 +286,7 @@ export default function Home() {
                 }}
                 className="relative group"
               >
-                <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-primary-100/50 to-accent-100/30 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" />
+                <div className="absolute -inset-4 rounded-3xl bg-linear-to-br from-primary-100/50 to-accent-100/30 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" />
                 <div className="relative p-8 rounded-3xl bg-white border border-stone-200/80 shadow-lg shadow-stone-200/30">
                   <span className="text-5xl mb-6 block">{item.icon}</span>
                   <span className="text-xs font-mono text-primary-500 font-semibold">{item.step}</span>
@@ -307,7 +307,7 @@ export default function Home() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-stone-900 to-stone-800 p-12 md:p-16 text-center"
+            className="relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-stone-900 to-stone-800 p-12 md:p-16 text-center"
           >
             {/* Decorative elements */}
             <div className="absolute top-0 left-0 w-64 h-64 bg-primary-500/20 rounded-full blur-3xl" />

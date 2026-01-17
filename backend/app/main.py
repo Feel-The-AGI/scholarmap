@@ -16,6 +16,8 @@ import asyncio
 from datetime import datetime
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
 from bs4 import BeautifulSoup
+from curl_cffi import requests as curl_requests
+from fake_useragent import UserAgent
 
 # Configure logging - DEBUG level for maximum verbosity
 logging.basicConfig(
@@ -181,8 +183,24 @@ Rules:
 If information is not clearly stated, omit it or mark confidence as "inferred".
 """
 
-# Rotating User-Agents to bypass basic bot detection
-USER_AGENTS = [
+# ==================== ULTRA-RESILIENT WEB SCRAPER ====================
+# 5-Layer fallback system to bypass ANY bot detection
+# Layer 1: curl_cffi (TLS fingerprint impersonation - mimics Chrome exactly)
+# Layer 2: httpx with full browser headers
+# Layer 3: Playwright with stealth mode
+# Layer 4: Playwright with human simulation
+# Layer 5: Playwright with Cloudflare/challenge bypass
+# =====================================================================
+
+# Initialize fake user agent generator
+try:
+    ua = UserAgent(browsers=['chrome', 'firefox', 'safari', 'edge'])
+except:
+    ua = None
+    logger.warning("Failed to initialize UserAgent, using fallback list")
+
+# Fallback User-Agents if fake_useragent fails
+FALLBACK_USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
@@ -197,13 +215,29 @@ VIEWPORTS = [
     {"width": 1536, "height": 864},
     {"width": 1440, "height": 900},
     {"width": 1280, "height": 720},
+    {"width": 2560, "height": 1440},
 ]
 
+# Chrome impersonation versions for curl_cffi
+CHROME_VERSIONS = [
+    "chrome110", "chrome116", "chrome119", "chrome120", 
+    "chrome123", "chrome124", "chrome131",
+]
+
+def get_random_user_agent() -> str:
+    """Get a random user agent, preferring real-time generation"""
+    try:
+        if ua:
+            return ua.random
+    except:
+        pass
+    return random.choice(FALLBACK_USER_AGENTS)
+
 def get_browser_headers() -> dict:
-    """Generate realistic browser headers to bypass bot detection"""
+    """Generate realistic browser headers"""
     return {
-        "User-Agent": random.choice(USER_AGENTS),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "User-Agent": get_random_user_agent(),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "Accept-Language": "en-US,en;q=0.9",
         "Accept-Encoding": "gzip, deflate, br",
         "DNT": "1",
@@ -217,12 +251,67 @@ def get_browser_headers() -> dict:
         "sec-ch-ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
         "sec-ch-ua-mobile": "?0",
         "sec-ch-ua-platform": '"Windows"',
+        "Pragma": "no-cache",
     }
 
 
+# ==================== LAYER 1: curl_cffi (TLS Fingerprint Impersonation) ====================
+async def fetch_with_curl_cffi(url: str) -> str | None:
+    """
+    Layer 1: curl_cffi with TLS fingerprint impersonation.
+    Mimics Chrome's exact JA3/TLS fingerprint - bypasses most basic detection.
+    """
+    logger.info(f"[Layer 1] curl_cffi with TLS impersonation: {url}")
+    
+    for attempt, impersonate in enumerate(random.sample(CHROME_VERSIONS, min(3, len(CHROME_VERSIONS)))):
+        try:
+            logger.debug(f"  Attempt {attempt + 1} with impersonate={impersonate}")
+            
+            # curl_cffi is synchronous, run in executor
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: curl_requests.get(
+                    str(url),
+                    impersonate=impersonate,
+                    timeout=25,
+                    allow_redirects=True,
+                    headers={
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                        "Accept-Language": "en-US,en;q=0.9",
+                        "Accept-Encoding": "gzip, deflate, br",
+                    }
+                )
+            )
+            
+            if response.status_code in [403, 429, 503, 520, 521, 522, 523, 524]:
+                logger.warning(f"  curl_cffi got {response.status_code}, trying next...")
+                await asyncio.sleep(random.uniform(1.0, 2.0))
+                continue
+            
+            if response.status_code == 200:
+                content = response.text
+                if len(content) > 500 and "blocked" not in content.lower()[:1000]:
+                    logger.info(f"  [Layer 1] SUCCESS - Got {len(content)} chars")
+                    return content
+            
+            logger.warning(f"  curl_cffi status {response.status_code}, content too short or blocked")
+            
+        except Exception as e:
+            logger.warning(f"  curl_cffi attempt {attempt + 1} failed: {e}")
+            await asyncio.sleep(random.uniform(0.5, 1.5))
+    
+    logger.info("  [Layer 1] FAILED - Moving to Layer 2")
+    return None
+
+
+# ==================== LAYER 2: httpx with Browser Headers ====================
 async def fetch_with_httpx(url: str, max_retries: int = 2) -> str | None:
-    """Try fetching with httpx (fast but may be blocked)"""
-    logger.debug(f"Trying httpx for: {url}")
+    """
+    Layer 2: httpx with full browser headers and HTTP/2.
+    Fast and works for sites without aggressive protection.
+    """
+    logger.info(f"[Layer 2] httpx with browser headers: {url}")
     
     for attempt in range(max_retries):
         headers = get_browser_headers()
@@ -238,164 +327,418 @@ async def fetch_with_httpx(url: str, max_retries: int = 2) -> str | None:
                 
                 response = await client.get(str(url), headers=headers)
                 
-                if response.status_code in [403, 429, 503]:
-                    logger.warning(f"httpx blocked with {response.status_code}, will try Playwright...")
-                    return None
+                if response.status_code in [403, 429, 503, 520, 521, 522, 523, 524]:
+                    logger.warning(f"  httpx blocked with {response.status_code}")
+                    continue
                 
-                response.raise_for_status()
-                return response.text
+                if response.status_code == 200:
+                    content = response.text
+                    if len(content) > 500:
+                        logger.info(f"  [Layer 2] SUCCESS - Got {len(content)} chars")
+                        return content
                 
         except Exception as e:
-            logger.warning(f"httpx attempt {attempt + 1} failed: {e}")
+            logger.warning(f"  httpx attempt {attempt + 1} failed: {e}")
     
+    logger.info("  [Layer 2] FAILED - Moving to Layer 3")
     return None
 
 
-async def fetch_with_playwright(url: str) -> str:
-    """Fetch using headless browser - bypasses most bot detection"""
-    logger.info(f"Using Playwright headless browser for: {url}")
+# ==================== LAYER 3: Playwright Basic Stealth ====================
+async def fetch_with_playwright_basic(url: str) -> str | None:
+    """
+    Layer 3: Playwright with basic stealth mode.
+    Real browser but minimal human simulation.
+    """
+    logger.info(f"[Layer 3] Playwright basic stealth: {url}")
     
-    async with async_playwright() as p:
-        # Launch browser with stealth settings
-        browser = await p.chromium.launch(
-            headless=True,
-            args=[
-                '--disable-blink-features=AutomationControlled',
-                '--disable-dev-shm-usage',
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-infobars',
-                '--window-position=0,0',
-                '--ignore-certifcate-errors',
-                '--ignore-certifcate-errors-spki-list',
-            ]
-        )
-        
-        # Create context with realistic settings
-        viewport = random.choice(VIEWPORTS)
-        user_agent = random.choice(USER_AGENTS)
-        
-        context = await browser.new_context(
-            viewport=viewport,
-            user_agent=user_agent,
-            locale='en-US',
-            timezone_id='America/New_York',
-            geolocation={'latitude': 40.7128, 'longitude': -74.0060},
-            permissions=['geolocation'],
-            java_script_enabled=True,
-        )
-        
-        # Add stealth scripts to avoid detection
-        await context.add_init_script("""
-            // Overwrite the 'webdriver' property
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => undefined
-            });
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-dev-shm-usage',
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-infobars',
+                    '--disable-extensions',
+                    '--disable-gpu',
+                    '--disable-software-rasterizer',
+                    '--window-position=0,0',
+                    '--ignore-certificate-errors',
+                    '--ignore-certificate-errors-spki-list',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                ]
+            )
             
-            // Overwrite the 'plugins' property
-            Object.defineProperty(navigator, 'plugins', {
-                get: () => [1, 2, 3, 4, 5]
-            });
+            viewport = random.choice(VIEWPORTS)
+            user_agent = get_random_user_agent()
             
-            // Overwrite the 'languages' property
-            Object.defineProperty(navigator, 'languages', {
-                get: () => ['en-US', 'en']
-            });
+            context = await browser.new_context(
+                viewport=viewport,
+                user_agent=user_agent,
+                locale='en-US',
+                timezone_id='America/New_York',
+                java_script_enabled=True,
+                bypass_csp=True,
+            )
             
-            // Remove automation indicators
-            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
-            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
-            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+            # Basic stealth scripts
+            await context.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+                Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
+                Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
+                window.chrome = {runtime: {}};
+            """)
             
-            // Fake chrome runtime
-            window.chrome = {
-                runtime: {}
-            };
+            page = await context.new_page()
             
-            // Fake permissions
-            const originalQuery = window.navigator.permissions.query;
-            window.navigator.permissions.query = (parameters) => (
-                parameters.name === 'notifications' ?
-                    Promise.resolve({ state: Notification.permission }) :
-                    originalQuery(parameters)
-            );
-        """)
-        
-        page = await context.new_page()
-        
-        try:
-            # Navigate with realistic behavior
-            logger.debug(f"Navigating to {url}...")
-            await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            response = await page.goto(url, wait_until='domcontentloaded', timeout=25000)
             
-            # Wait a bit and scroll like a human
+            if response and response.status in [403, 429, 503]:
+                logger.warning(f"  Playwright basic got {response.status}")
+                await browser.close()
+                return None
+            
+            await asyncio.sleep(random.uniform(0.5, 1.5))
+            content = await page.content()
+            
+            await browser.close()
+            
+            if len(content) > 500:
+                logger.info(f"  [Layer 3] SUCCESS - Got {len(content)} chars")
+                return content
+            
+    except Exception as e:
+        logger.warning(f"  Playwright basic failed: {e}")
+    
+    logger.info("  [Layer 3] FAILED - Moving to Layer 4")
+    return None
+
+
+# ==================== LAYER 4: Playwright with Human Simulation ====================
+async def fetch_with_playwright_human(url: str) -> str | None:
+    """
+    Layer 4: Playwright with full human simulation.
+    Mouse movements, scrolling, realistic delays.
+    """
+    logger.info(f"[Layer 4] Playwright with human simulation: {url}")
+    
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-dev-shm-usage',
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-infobars',
+                    '--disable-extensions',
+                    '--window-position=0,0',
+                    '--ignore-certificate-errors',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                    '--disable-web-security',
+                    '--disable-features=BlockInsecurePrivateNetworkRequests',
+                ]
+            )
+            
+            viewport = random.choice(VIEWPORTS)
+            user_agent = get_random_user_agent()
+            
+            context = await browser.new_context(
+                viewport=viewport,
+                user_agent=user_agent,
+                locale='en-US',
+                timezone_id=random.choice(['America/New_York', 'America/Los_Angeles', 'Europe/London']),
+                geolocation={'latitude': 40.7128, 'longitude': -74.0060},
+                permissions=['geolocation'],
+                java_script_enabled=True,
+                bypass_csp=True,
+                extra_http_headers={
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                }
+            )
+            
+            # Advanced stealth scripts
+            await context.add_init_script("""
+                // Remove webdriver
+                Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+                
+                // Realistic plugins
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => {
+                        const plugins = [
+                            {name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer'},
+                            {name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai'},
+                            {name: 'Native Client', filename: 'internal-nacl-plugin'},
+                        ];
+                        plugins.length = 3;
+                        return plugins;
+                    }
+                });
+                
+                // Languages
+                Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
+                
+                // Chrome runtime
+                window.chrome = {
+                    runtime: {},
+                    loadTimes: function() {},
+                    csi: function() {},
+                    app: {}
+                };
+                
+                // Permissions
+                const originalQuery = window.navigator.permissions.query;
+                window.navigator.permissions.query = (parameters) => (
+                    parameters.name === 'notifications' ?
+                        Promise.resolve({state: Notification.permission}) :
+                        originalQuery(parameters)
+                );
+                
+                // Remove automation indicators
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+                
+                // WebGL vendor/renderer
+                const getParameter = WebGLRenderingContext.prototype.getParameter;
+                WebGLRenderingContext.prototype.getParameter = function(parameter) {
+                    if (parameter === 37445) return 'Intel Inc.';
+                    if (parameter === 37446) return 'Intel Iris OpenGL Engine';
+                    return getParameter.apply(this, arguments);
+                };
+                
+                // Canvas fingerprint protection
+                const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
+                HTMLCanvasElement.prototype.toDataURL = function(type) {
+                    if (type === 'image/png' && this.width === 220 && this.height === 30) {
+                        return originalToDataURL.apply(this, arguments);
+                    }
+                    return originalToDataURL.apply(this, arguments);
+                };
+            """)
+            
+            page = await context.new_page()
+            
+            # Navigate
+            response = await page.goto(url, wait_until='networkidle', timeout=35000)
+            
+            if response and response.status in [403, 429, 503]:
+                logger.warning(f"  Playwright human got {response.status}")
+                await browser.close()
+                return None
+            
+            # Human-like behavior
             await asyncio.sleep(random.uniform(1.0, 2.0))
             
-            # Scroll down slowly
-            await page.evaluate("""async () => {
-                await new Promise(resolve => {
-                    let totalHeight = 0;
-                    const distance = 300;
-                    const timer = setInterval(() => {
-                        window.scrollBy(0, distance);
-                        totalHeight += distance;
-                        if (totalHeight >= document.body.scrollHeight / 3) {
-                            clearInterval(timer);
-                            resolve();
-                        }
-                    }, 100);
-                });
-            }""")
+            # Random mouse movements
+            for _ in range(random.randint(2, 5)):
+                x = random.randint(100, viewport['width'] - 100)
+                y = random.randint(100, viewport['height'] - 100)
+                await page.mouse.move(x, y)
+                await asyncio.sleep(random.uniform(0.1, 0.3))
+            
+            # Smooth scroll
+            await page.evaluate("""
+                async () => {
+                    await new Promise(resolve => {
+                        let totalHeight = 0;
+                        const distance = Math.floor(Math.random() * 100) + 200;
+                        const timer = setInterval(() => {
+                            window.scrollBy(0, distance);
+                            totalHeight += distance;
+                            if (totalHeight >= Math.min(document.body.scrollHeight / 2, 2000)) {
+                                clearInterval(timer);
+                                resolve();
+                            }
+                        }, Math.floor(Math.random() * 50) + 80);
+                    });
+                }
+            """)
             
             await asyncio.sleep(random.uniform(0.5, 1.0))
             
-            # Get content
             content = await page.content()
-            logger.debug(f"Playwright got {len(content)} chars")
-            
-            return content
-            
-        except PlaywrightTimeout as e:
-            logger.error(f"Playwright timeout: {e}")
-            raise
-        finally:
             await browser.close()
+            
+            if len(content) > 500:
+                logger.info(f"  [Layer 4] SUCCESS - Got {len(content)} chars")
+                return content
+            
+    except Exception as e:
+        logger.warning(f"  Playwright human failed: {e}")
+    
+    logger.info("  [Layer 4] FAILED - Moving to Layer 5")
+    return None
 
 
+# ==================== LAYER 5: Playwright Challenge Bypass ====================
+async def fetch_with_playwright_challenge(url: str) -> str | None:
+    """
+    Layer 5: Playwright with challenge/Cloudflare bypass.
+    Waits for JS challenges to complete, longer timeouts.
+    """
+    logger.info(f"[Layer 5] Playwright challenge bypass: {url}")
+    
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--single-process',
+                    '--disable-gpu',
+                    '--ignore-certificate-errors',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                ]
+            )
+            
+            viewport = random.choice(VIEWPORTS)
+            user_agent = get_random_user_agent()
+            
+            context = await browser.new_context(
+                viewport=viewport,
+                user_agent=user_agent,
+                locale='en-US',
+                timezone_id='America/New_York',
+                java_script_enabled=True,
+                bypass_csp=True,
+            )
+            
+            # Full stealth mode
+            await context.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+                Object.defineProperty(navigator, 'plugins', {get: () => [1,2,3,4,5]});
+                Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
+                window.chrome = {runtime: {}, loadTimes: () => {}, csi: () => {}};
+                
+                // Hide automation
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+                delete window.__nightmare;
+                delete window._phantom;
+                delete window.callPhantom;
+            """)
+            
+            page = await context.new_page()
+            
+            # First navigation
+            logger.debug(f"  First navigation to {url}")
+            await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            
+            # Wait for any challenge to complete
+            logger.debug("  Waiting for potential challenge...")
+            await asyncio.sleep(5)  # Wait for Cloudflare/challenge
+            
+            # Check for challenge indicators and wait more if needed
+            content = await page.content()
+            challenge_indicators = [
+                'challenge-running', 'cf-browser-verification', 
+                'please wait', 'checking your browser', 'ddos-guard',
+                'just a moment', 'verify you are human'
+            ]
+            
+            if any(indicator in content.lower() for indicator in challenge_indicators):
+                logger.debug("  Challenge detected, waiting longer...")
+                await asyncio.sleep(8)  # Wait for challenge to complete
+                
+                # Try to wait for navigation
+                try:
+                    await page.wait_for_load_state('networkidle', timeout=15000)
+                except:
+                    pass
+            
+            # Scroll and interact
+            await page.evaluate("window.scrollBy(0, 500)")
+            await asyncio.sleep(random.uniform(1.0, 2.0))
+            
+            content = await page.content()
+            await browser.close()
+            
+            if len(content) > 500:
+                # Check if we got past the challenge
+                if not any(indicator in content.lower() for indicator in challenge_indicators):
+                    logger.info(f"  [Layer 5] SUCCESS - Got {len(content)} chars")
+                    return content
+            
+    except Exception as e:
+        logger.warning(f"  Playwright challenge failed: {e}")
+    
+    logger.error("  [Layer 5] FAILED - All layers exhausted")
+    return None
+
+
+# ==================== MAIN FETCH ORCHESTRATOR ====================
 async def fetch_page_content(url: str) -> str:
-    """Fetch page content - tries httpx first, falls back to Playwright"""
-    logger.debug(f"Fetching page content from: {url}")
+    """
+    Ultra-resilient content fetcher with 5-layer fallback system.
+    Tries increasingly sophisticated methods until one succeeds.
+    """
+    logger.info(f"="*60)
+    logger.info(f"FETCHING: {url}")
+    logger.info(f"="*60)
     
-    # Try fast httpx first
+    # Layer 1: curl_cffi (TLS fingerprint - fastest)
+    content = await fetch_with_curl_cffi(url)
+    if content:
+        return clean_html_content(content)
+    
+    # Layer 2: httpx (fast HTTP client)
     content = await fetch_with_httpx(url)
-    
     if content:
-        logger.debug(f"httpx succeeded, got {len(content)} chars")
-        return content[:50000]
+        return clean_html_content(content)
     
-    # Fall back to Playwright for stubborn sites
-    logger.info("httpx failed, falling back to Playwright headless browser...")
-    content = await fetch_with_playwright(url)
-    
-    # Clean up HTML if needed
+    # Layer 3: Playwright basic (real browser)
+    content = await fetch_with_playwright_basic(url)
     if content:
-        # Extract main text content for better LLM processing
+        return clean_html_content(content)
+    
+    # Layer 4: Playwright with human simulation
+    content = await fetch_with_playwright_human(url)
+    if content:
+        return clean_html_content(content)
+    
+    # Layer 5: Playwright challenge bypass
+    content = await fetch_with_playwright_challenge(url)
+    if content:
+        return clean_html_content(content)
+    
+    # All layers failed
+    raise Exception(f"Failed to fetch content from {url} - All 5 layers exhausted")
+
+
+def clean_html_content(content: str) -> str:
+    """Clean HTML and extract readable text for LLM processing"""
+    try:
         soup = BeautifulSoup(content, 'lxml')
         
-        # Remove script and style elements
-        for element in soup(['script', 'style', 'nav', 'footer', 'header', 'aside']):
+        # Remove unwanted elements
+        for element in soup(['script', 'style', 'nav', 'footer', 'header', 'aside', 'noscript', 'iframe', 'svg']):
             element.decompose()
         
         # Get text
         text = soup.get_text(separator='\n', strip=True)
         
-        # If text is too short, return raw HTML
+        # If text is too short, return original HTML (might have useful structured data)
         if len(text) < 500:
             return content[:50000]
         
         return text[:50000]
-    
-    raise Exception(f"Failed to fetch content from {url}")
+        
+    except Exception as e:
+        logger.warning(f"HTML cleaning failed: {e}")
+        return content[:50000]
 
 def extract_with_gemini(content: str) -> dict:
     logger.debug("Starting Gemini extraction...")

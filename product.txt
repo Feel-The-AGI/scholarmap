@@ -1,0 +1,925 @@
+Ignore and skip to content
+
+Vous avez dit :
+do you remeber shark tank Scolly
+the guy that won $1.3M in scholarships and built the app
+later sallie acquired it and its now @sallie.com
+
+what dont they do that once can take advantage of and build a better product yet stupid simple
+ChatGPT a dit :
+Yeah. Scolly. I remember.
+
+Short version: they won on focus, then got swallowed by institutional incentives.
+
+What they did right
+
+One painful problem: finding scholarships.
+
+One promise: “free money exists, here’s how to get it.”
+
+Dead simple flow: profile → matches → apply.
+
+Emotional hook: students felt stupid for not using it.
+
+What they don’t do (anymore) and where the gap is 👇
+
+They don’t optimize for action
+They show opportunities, not outcomes.
+No pressure, no sequencing, no “do this now or lose $2,000.”
+
+Missed angle:
+A system that behaves like a strict coach.
+“What to apply to this week. What you’re late on. What you’re about to miss.”
+
+They don’t personalize deeply
+Still surface-level filters.
+Major, GPA, location… basic.
+
+What’s missing:
+Behavioral + narrative matching.
+Your background, story, hardship, trajectory → matched to scholarships you are statistically likely to win.
+
+Not “eligible.”
+Winnable.
+
+They don’t help you write
+This is the big one.
+
+Most students fail at:
+
+essays
+
+framing their story
+
+confidence
+
+Sallie won’t touch this deeply because of compliance, brand risk, and scale optics.
+
+A simple edge:
+Scholarship-specific essay scaffolds.
+Not generic AI fluff.
+Actual structure: hook, proof, alignment, close.
+
+They don’t track ROI
+Students don’t know:
+
+how much they’ve applied for
+
+how much they’ve won
+
+what worked
+
+Imagine:
+“$18,400 applied. $3,200 won. Essay type A converts 3x better.”
+
+That feedback loop doesn’t exist.
+
+They’re not community-driven
+No quiet peer proof.
+No “people like you just won this.”
+
+Yet that’s what motivates action.
+
+Why no one has crushed them yet
+
+Market is boring to VCs.
+
+Students have low willingness to pay.
+
+Requires trust + distribution.
+
+Institutions move slow, but they own the pipes.
+
+Where a stupid simple better product could live
+Not replacing Scolly.
+Sitting on top or next to it.
+
+Think:
+
+“Scholarship application autopilot”
+
+“Weekly $ target for students”
+
+“One essay → adapted to 12 scholarships”
+
+One sharp question for you:
+Do you see this as a student tool, or a parent / school / NGO-backed tool?
+
+Because the business changes completely depending on that.
+
+Vous avez dit :
+Ok I see
+My dad spoke to me he wanted to do one but for bachelor's to PhD 
+
+For now just a site that shows and neatly categorizes these opportunities and can take in your fata and determine if you qualify
+
+Beautiful like passage does
+ChatGPT a dit :
+Hmm. I see it.
+
+Let me slow this down a bit and be honest with you.
+
+What your dad is suggesting is not wrong, but it’s also the most crowded, shallow layer of the problem.
+
+A clean site.
+Bachelor → PhD.
+Opportunities listed.
+User enters data.
+System says “you qualify / you don’t.”
+
+That already exists. Many times over.
+They’re just ugly, outdated, or badly organized.
+
+So the question is not can it be built.
+It’s: why would anyone keep using it?
+
+Let’s ground this.
+
+What does work in that idea
+
+Scope is clear: Bachelor → PhD.
+
+Audience is serious. This is not random students.
+
+Stakes are high: visas, careers, life trajectory.
+
+Parents, sponsors, churches, NGOs care about this.
+
+That’s good soil.
+
+Where it usually dies
+
+“You qualify” is not enough.
+
+People still don’t apply.
+
+Or they apply wrongly.
+
+Or they miss deadlines.
+
+Or they lose motivation halfway.
+
+So if you stop at “qualification checker,” it becomes a directory.
+Directories don’t win anymore unless they’re monopolies.
+
+Now, here’s the stupid-simple but sharp version that could work 👇
+
+Phase 1. Opportunity clarity, not volume
+Not thousands of listings.
+50–200 high-quality, recurring programs:
+
+Chevening
+
+DAAD
+
+Erasmus
+
+Commonwealth
+
+Fulbright
+
+Mastercard Foundation
+
+University-funded PhD programs
+
+Each one explained like you’re talking to a human:
+
+Who this is really for
+
+Who usually wins
+
+Common rejection reasons
+
+Timeline in plain English
+
+This already beats most sites.
+
+Phase 2. Eligibility + readiness score
+Not just “eligible.”
+
+Three signals:
+
+Eligible
+
+Competitive
+
+Not ready yet
+
+This matters. People waste years applying blindly.
+
+Phase 3. Timeline view
+This is where Passage-level beauty matters.
+
+A single timeline:
+
+When to prepare documents
+
+When to contact referees
+
+When to apply
+
+When interviews happen
+
+Visual. Calm. No noise.
+
+Phase 4. Data intake, but minimal
+Only what affects decisions:
+
+Degree
+
+GPA band
+
+Country
+
+Field
+
+Work/research experience
+
+No long forms. No CV upload at first.
+
+Now, I’m going to challenge you gently.
+
+Are you trying to build:
+
+a real product
+or
+
+something meaningful to your dad that may grow later?
+
+Both are valid. But mixing them causes confusion.
+
+Also important:
+Who is this for first?
+
+Ghanaian students?
+
+Africa-wide?
+
+Global South?
+
+Parents?
+
+Church-sponsored candidates?
+
+Don’t answer fast.
+Sit with it.
+
+One last thing.
+If this stays “beautiful directory + qualifier,” it should be fast, calm, and trusted. No AI hype. No “revolution.”
+
+Just clarity.
+
+Tell me:
+Who do you imagine opening this site at 11pm, stressed, searching?
+
+Vous avez dit :
+so how do we get the data?
+ChatGPT a dit :
+Good. This is the right question.
+
+Let’s not romanticize this. Data is the whole game here.
+
+There are only three real ways to get this data. Everything else is noise.
+
+1. Official sources (slow, boring, necessary)
+This is your backbone.
+
+Sources:
+
+Government scholarship pages (DAAD, Chevening, Fulbright, Erasmus, Commonwealth)
+
+University graduate school pages
+
+Foundation sites (Mastercard, Gates, etc.)
+
+How this actually works:
+
+Manual curation first. No scraping heroics yet.
+
+One Google Sheet. One person.
+
+Fields: program, level, country, eligibility rules, deadlines, link.
+
+Reality:
+
+Painful.
+
+Low-tech.
+
+But it builds trust and accuracy.
+
+If you skip this, the product collapses later.
+
+2. Pattern extraction (this is where you win)
+Over time, you’ll notice:
+
+GPA cutoffs repeat
+
+Country restrictions repeat
+
+Fields repeat
+
+Timelines repeat
+
+You don’t need full data to start scoring eligibility.
+You need rules, not records.
+
+Example:
+“Most funded PhDs in Germany require:
+
+Master’s in related field
+
+Evidence of research ability
+
+Supervisor contact before application”
+
+That insight is more valuable than 1,000 listings.
+
+This comes only from reading and summarizing manually at first.
+
+3. User-contributed data (careful here)
+Later, not now.
+
+Examples:
+
+“I applied and got rejected because…”
+
+“Interview stage happened in March”
+
+“They cared more about X than GPA”
+
+But:
+
+This must be anonymous.
+
+Moderated.
+
+Treated as signal, not truth.
+
+Early on, don’t depend on users. They’ll poison the data.
+
+What NOT to do (I’ll be blunt)
+Don’t scrape aggressively. You’ll get blocked and sued.
+
+Don’t rely on PDFs auto-parsed by AI at the start.
+
+Don’t integrate APIs that don’t exist.
+
+Don’t promise “real-time updates.” That’s a lie early-stage.
+
+A sane starting plan (2 weeks)
+Week 1:
+
+Pick 10 flagship programs.
+
+Fully map them.
+
+Write them in human language.
+
+Week 2:
+
+Build a simple eligibility logic:
+
+Yes / Maybe / No
+
+Add timeline visualization.
+
+No login yet.
+
+That’s enough to test if people trust it.
+
+Now, one hard question for you:
+Who is doing this boring work?
+
+You, a student intern, or someone your dad already has access to?
+
+Because whoever owns the data work owns the product.
+
+Vous avez dit :
+i hear you
+on the admin part of the what we will do is simple
+
+data structure is very important
+give me our full schema
+
+then we create an agent who's job will replace the human (go online get the data and populate the database) the ai agent wont necessarily scrape, we will manually give the agent links in bulk or one by one and it pulls the link analyzes everything and populates the database
+we will use supabase for our database and auth.
+
+visually its shows beautifully 
+program, date, requirements
+
+also the agent must flag that something is old or irrelavant or maybe we cna do that ourelves
+
+now when i say agent, no parsing, this is 2026, pass everyhing to gemini and let it do all the work. no manual libraries.
+ChatGPT a dit :
+I hear the intent. Let me slow you down and tighten it, because there are two quiet risks in what you just said.
+
+First, the schema.
+Second, the “agent replaces human” belief. I won’t kill it, but I’ll ground it.
+
+1. The core truth first (don’t skip this)
+If your schema is weak, no agent will save you.
+If your schema is strong, even a dumb human can run the system.
+
+So we design the schema as if:
+
+agents come and go
+
+models change
+
+mistakes happen
+
+humans may need to intervene
+
+Now, the schema.
+
+2. Canonical schema (clean, future-proof, not overengineered)
+I’ll give you only what matters. No fluff tables.
+
+A. programs
+This is the heart.
+
+id (uuid)
+
+name (text)
+
+provider (text)
+e.g. DAAD, UK Gov, University of X
+
+level (enum)
+bachelor | masters | phd | postdoc
+
+funding_type (enum)
+full | partial | tuition_only | stipend_only
+
+countries_eligible (array[text])
+
+countries_of_study (array[text])
+
+fields (array[text])
+
+official_url (text)
+
+status (enum)
+active | paused | discontinued | unknown
+
+last_verified_at (timestamp)
+
+created_at
+
+updated_at
+
+Nothing fancy. This table must stay boring.
+
+B. eligibility_rules
+Rules, not prose.
+
+id
+
+program_id (fk)
+
+rule_type (enum)
+gpa | degree | nationality | age | work_experience | language | other
+
+operator (enum)
+
+= | <= | = | in | not_in | exists
+
+value (jsonb)
+e.g. { "min": 3.5 }, { "degrees": ["BSc", "BA"] }
+
+confidence (enum)
+high | medium | inferred
+
+source_snippet (text)
+
+created_at
+
+This is what lets you compute Eligible / Competitive / Not ready later.
+
+C. requirements
+Human-readable, but structured.
+
+id
+
+program_id
+
+type (enum)
+transcript | cv | essay | references | proposal | test
+
+description (text)
+
+mandatory (boolean)
+
+created_at
+
+D. deadlines
+Because dates change.
+
+id
+
+program_id
+
+cycle (text)
+e.g. 2026/2027
+
+deadline_date (date)
+
+timezone (text)
+
+stage (enum)
+application | interview | nomination
+
+created_at
+
+E. sources
+This is how you audit the agent.
+
+id
+
+program_id
+
+url
+
+retrieved_at
+
+agent_model (text)
+
+raw_summary (text)
+
+confidence_score (float 0–1)
+
+If this table is missing, you’re flying blind.
+
+F. agent_reviews
+Flags + decay detection.
+
+id
+
+program_id
+
+issue_type (enum)
+outdated | conflicting | missing_data | suspicious
+
+note (text)
+
+severity (enum)
+low | medium | high
+
+created_at
+
+resolved (boolean)
+
+This is where “something feels old” lives.
+
+3. Now, about the agent (this is where I challenge you)
+“No parsing, pass everything to Gemini, let it do all the work.”
+
+Hmm. Careful.
+
+This can work, but only if you accept these constraints:
+
+What the agent CAN do well
+Read long pages
+
+Extract structured facts
+
+Summarize eligibility
+
+Detect missing or ambiguous rules
+
+Flag inconsistencies across sources
+
+What it CANNOT be trusted with
+Assuming rules that aren’t explicit
+
+Guessing GPA cutoffs
+
+Deciding “still active” without evidence
+
+Treating old PDFs as current truth
+
+So the agent should behave like:
+a junior analyst with good reading skills, not a policy authority.
+
+4. Agent workflow (realistic, not hype)
+You give the agent a URL
+
+Agent outputs:
+
+Structured fields (mapped to schema)
+
+Confidence per field
+
+Quotes or snippets as evidence
+
+If confidence < threshold → flag for review
+
+Auto-schedule recheck every X months
+
+If page content changes materially → raise outdated flag
+
+No scraping. No crawling. Fine.
+But you still control the URLs. That’s key.
+
+5. One uncomfortable question (don’t dodge)
+Why do you want zero human in the loop?
+
+Speed?
+
+Cost?
+
+Pride?
+
+Belief that “AI should handle it”?
+
+Because for scholarships, wrong data harms lives.
+This is not flight tracking. This is destiny-level stuff.
+
+I’m not saying heavy moderation.
+I’m saying explicit ownership.
+
+So answer me honestly:
+Who signs off when the agent is wrong?
+
+If you don’t have that answer, pause the agent idea for a day.
+
+Vous avez dit :
+we dont want to spend money paying humans to do this job!
+we provide the link to the agent and it reads the webpaege and then populates thats all, its a co pilot!!
+so someone will be there wit th agent monitoring
+
+what do we call the software
+ChatGPT a dit :
+Okay. I hear the constraint.
+“No paid humans. Agent does the heavy lifting. One person supervising.”
+
+That’s fair. Let’s not fight that.
+
+Now the name. This matters more than people admit.
+
+First, what the software is not:
+
+Not an AI lab.
+
+Not a bot.
+
+Not a scraper.
+
+Not “revolutionary.”
+
+Not loud.
+
+What it is:
+
+A calm guide.
+
+A map.
+
+A filter between chaos and opportunity.
+
+A trusted reference.
+
+So the name must feel:
+
+credible to parents
+
+serious to students
+
+acceptable to institutions
+
+not gimmicky
+
+Strong directions (with reasoning)
+1. Clear, academic, trusted
+These age well.
+
+Fellowship
+Simple. Heavy. Understood globally.
+
+FundPath
+Money + journey.
+
+StudyAtlas
+Feels like a map, not a tool.
+
+Grantwise
+Calm intelligence, not hype.
+
+ScholarMap
+Obvious, almost boring. That’s good.
+
+2. Guidance / passage energy (since you mentioned Passage)
+Soft, beautiful, supportive.
+
+Passway
+
+Aletheia (truth, but maybe too abstract)
+
+ViaStudy
+
+OpenStudy
+
+Clarity
+
+3. African/global without being loud
+Subtle, not brand-heavy.
+
+Ukuya (journey forward)
+
+SomaPath
+
+Akoma (heart, sincerity)
+
+Tola (worth, value)
+
+Be careful here. Subtle is key.
+
+My top 3, if I'm being strict
+ScholarMap
+It says exactly what it does. No explanation. No hype.
+
+FundPath
+Broad enough to grow. Serious tone.
+
+StudyAtlas
+Visual, calm, scalable.
+
+Now I'm going to ask you one sharp thing and stop.
+
+When a father sends this to his son at 11pm,
+what name makes him feel: “this is safe, this is serious” ?
+
+Answer that, and you'll know the name.
+
+You said:
+frontend nextjs 16+ latest BaaS - supabase maybe a server component for the agent that can be fastapi on render
+ChatGPT said:
+Okay. Stack is fine. Nothing crazy there.
+Let's ground it so you don't accidentally overbuild.
+
+I'll talk architecture, not hype.
+
+1. Frontend: Next.js 16+ (App Router)
+Good choice. Use it boringly .
+
+App Router
+
+Server Components by default
+
+Client Components only for:
+
+forms
+
+filters
+
+auth state
+
+Pages you actually need at v1:
+
+/– overview + search
+
+/programs– list
+
+/programs/[id]– single program
+
+/qualify– simple form → results
+
+/admin/agent– internal, ugly, functional
+
+No obsession animations. Beauty = spacing + typography.
+
+2. Supabase (BaaS)
+Use Supabase for what it's good at:
+
+Auth
+
+Postgres
+
+Row-level security
+
+Tables:
+
+Programs, rules, deadlines, sources (from earlier)
+
+Users
+
+Agent logs
+
+Important:
+
+Public users = read-only
+
+Admin users = write + approve
+
+Agent = service role key only
+
+Do not let the agent write blindly without tagging source + confidence.
+
+3. Agent service (FastAPI on Render)
+This should be small and dumb , not a god service.
+
+Responsibilities:
+
+Accept URL(s)
+
+Fetch page content
+
+Send content to Gemini
+
+Receive structured JSON
+
+Validate schema
+
+Write to Supabase
+
+Log confidence + issues
+
+That's it.
+
+No UI. No auth beyond service token.
+
+Endpoints:
+
+POST /ingest
+
+POST /recheck
+
+GET /health
+
+If it grows beyond this, you're lying to yourself.
+
+4. The critical part you're underestimating ⚠️
+Schema validation layer.
+
+Even if Gemini is “doing all the work”, you still need:
+
+Required fields check
+
+Enum validation
+
+Date sanity checks
+
+Confidence threshold enforcement
+
+If validation fails:
+
+Save draft
+
+Flag for review
+
+Do not publish
+
+This is non-negotiable.
+
+5. Data freshness (cheap, no humans)
+Simple rule:
+
+Every program haslast_verified_at
+
+Cron job triggers re-ingest every X months
+
+If page content hash changes → flag
+
+No humans paid. Just be careful.
+
+6. What NOT to add yet
+User accounts beyond basic auth
+
+Try help
+
+AI chat
+
+Notifications
+
+Mobile app
+
+Scraping
+
+You're building trust infrastructure , not a startup demo.
+
+One thing I'm checking you on
+You're stacking tools fast again.
+
+This project dies if:
+
+the data is wrong
+
+the site feels noisy
+
+the agent feels magical instead of accountable
+
+So tell me complainingly:
+Who is the first real user?
+
+A final-year Ghanaian student?
+A parent?
+A church sponsor?
+
+Pick one.
+Everything else follows.
+
+
+
+No file chosenNo file chosen
+ChatGPT can make mistakes. Consider verifying important information.

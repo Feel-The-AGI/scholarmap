@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: scholarmap
+    runtime: static
+    plan: starter
+    region: oregon
+    buildCommand: npm install && npm run build
+    staticPublishPath: out
+    envVars:
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false

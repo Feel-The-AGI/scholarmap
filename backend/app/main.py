@@ -11,6 +11,8 @@ import os
 import logging
 import sys
 import traceback
+import random
+import asyncio
 from datetime import datetime
 
 # Configure logging - DEBUG level for maximum verbosity
@@ -177,15 +179,94 @@ Rules:
 If information is not clearly stated, omit it or mark confidence as "inferred".
 """
 
-async def fetch_page_content(url: str) -> str:
+# Rotating User-Agents to bypass basic bot detection
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+]
+
+def get_browser_headers() -> dict:
+    """Generate realistic browser headers to bypass bot detection"""
+    return {
+        "User-Agent": random.choice(USER_AGENTS),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "DNT": "1",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
+        "sec-ch-ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+    }
+
+async def fetch_page_content(url: str, max_retries: int = 3) -> str:
+    """Fetch page content with browser-like headers and retry logic"""
     logger.debug(f"Fetching page content from: {url}")
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        response = await client.get(str(url), follow_redirects=True)
-        logger.debug(f"HTTP response status: {response.status_code}")
-        response.raise_for_status()
-        content = response.text[:50000]
-        logger.debug(f"Content length: {len(content)} chars")
-        return content
+    
+    last_error = None
+    
+    for attempt in range(max_retries):
+        headers = get_browser_headers()
+        logger.debug(f"Attempt {attempt + 1}/{max_retries} with User-Agent: {headers['User-Agent'][:50]}...")
+        
+        try:
+            async with httpx.AsyncClient(
+                timeout=30.0,
+                follow_redirects=True,
+                http2=True,  # Use HTTP/2 like modern browsers
+            ) as client:
+                # Add a small random delay to seem more human
+                if attempt > 0:
+                    delay = random.uniform(1.0, 3.0)
+                    logger.debug(f"Waiting {delay:.1f}s before retry...")
+                    await asyncio.sleep(delay)
+                
+                response = await client.get(str(url), headers=headers)
+                logger.debug(f"HTTP response status: {response.status_code}")
+                
+                if response.status_code == 403:
+                    logger.warning(f"Got 403 Forbidden on attempt {attempt + 1}, retrying with different headers...")
+                    last_error = httpx.HTTPStatusError(
+                        f"403 Forbidden", 
+                        request=response.request, 
+                        response=response
+                    )
+                    continue
+                
+                if response.status_code == 429:
+                    logger.warning(f"Got 429 Too Many Requests, waiting longer...")
+                    await asyncio.sleep(5.0 + random.uniform(1.0, 3.0))
+                    last_error = httpx.HTTPStatusError(
+                        f"429 Too Many Requests", 
+                        request=response.request, 
+                        response=response
+                    )
+                    continue
+                    
+                response.raise_for_status()
+                content = response.text[:50000]
+                logger.debug(f"Content length: {len(content)} chars")
+                return content
+                
+        except httpx.HTTPStatusError as e:
+            logger.warning(f"HTTP error on attempt {attempt + 1}: {e}")
+            last_error = e
+        except Exception as e:
+            logger.error(f"Error on attempt {attempt + 1}: {e}")
+            last_error = e
+    
+    # All retries failed
+    raise last_error or Exception(f"Failed to fetch {url} after {max_retries} attempts")
 
 def extract_with_gemini(content: str) -> dict:
     logger.debug("Starting Gemini extraction...")

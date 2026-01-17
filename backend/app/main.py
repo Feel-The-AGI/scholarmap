@@ -14,6 +14,8 @@ import traceback
 import random
 import asyncio
 from datetime import datetime
+from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
+from bs4 import BeautifulSoup
 
 # Configure logging - DEBUG level for maximum verbosity
 logging.basicConfig(
@@ -189,6 +191,14 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
 ]
 
+VIEWPORTS = [
+    {"width": 1920, "height": 1080},
+    {"width": 1366, "height": 768},
+    {"width": 1536, "height": 864},
+    {"width": 1440, "height": 900},
+    {"width": 1280, "height": 720},
+]
+
 def get_browser_headers() -> dict:
     """Generate realistic browser headers to bypass bot detection"""
     return {
@@ -209,64 +219,183 @@ def get_browser_headers() -> dict:
         "sec-ch-ua-platform": '"Windows"',
     }
 
-async def fetch_page_content(url: str, max_retries: int = 3) -> str:
-    """Fetch page content with browser-like headers and retry logic"""
-    logger.debug(f"Fetching page content from: {url}")
-    
-    last_error = None
+
+async def fetch_with_httpx(url: str, max_retries: int = 2) -> str | None:
+    """Try fetching with httpx (fast but may be blocked)"""
+    logger.debug(f"Trying httpx for: {url}")
     
     for attempt in range(max_retries):
         headers = get_browser_headers()
-        logger.debug(f"Attempt {attempt + 1}/{max_retries} with User-Agent: {headers['User-Agent'][:50]}...")
         
         try:
             async with httpx.AsyncClient(
-                timeout=30.0,
+                timeout=20.0,
                 follow_redirects=True,
-                http2=True,  # Use HTTP/2 like modern browsers
+                http2=True,
             ) as client:
-                # Add a small random delay to seem more human
                 if attempt > 0:
-                    delay = random.uniform(1.0, 3.0)
-                    logger.debug(f"Waiting {delay:.1f}s before retry...")
-                    await asyncio.sleep(delay)
+                    await asyncio.sleep(random.uniform(1.0, 2.0))
                 
                 response = await client.get(str(url), headers=headers)
-                logger.debug(f"HTTP response status: {response.status_code}")
                 
-                if response.status_code == 403:
-                    logger.warning(f"Got 403 Forbidden on attempt {attempt + 1}, retrying with different headers...")
-                    last_error = httpx.HTTPStatusError(
-                        f"403 Forbidden", 
-                        request=response.request, 
-                        response=response
-                    )
-                    continue
+                if response.status_code in [403, 429, 503]:
+                    logger.warning(f"httpx blocked with {response.status_code}, will try Playwright...")
+                    return None
                 
-                if response.status_code == 429:
-                    logger.warning(f"Got 429 Too Many Requests, waiting longer...")
-                    await asyncio.sleep(5.0 + random.uniform(1.0, 3.0))
-                    last_error = httpx.HTTPStatusError(
-                        f"429 Too Many Requests", 
-                        request=response.request, 
-                        response=response
-                    )
-                    continue
-                    
                 response.raise_for_status()
-                content = response.text[:50000]
-                logger.debug(f"Content length: {len(content)} chars")
-                return content
+                return response.text
                 
-        except httpx.HTTPStatusError as e:
-            logger.warning(f"HTTP error on attempt {attempt + 1}: {e}")
-            last_error = e
         except Exception as e:
-            logger.error(f"Error on attempt {attempt + 1}: {e}")
-            last_error = e
+            logger.warning(f"httpx attempt {attempt + 1} failed: {e}")
     
-    # All retries failed
-    raise last_error or Exception(f"Failed to fetch {url} after {max_retries} attempts")
+    return None
+
+
+async def fetch_with_playwright(url: str) -> str:
+    """Fetch using headless browser - bypasses most bot detection"""
+    logger.info(f"Using Playwright headless browser for: {url}")
+    
+    async with async_playwright() as p:
+        # Launch browser with stealth settings
+        browser = await p.chromium.launch(
+            headless=True,
+            args=[
+                '--disable-blink-features=AutomationControlled',
+                '--disable-dev-shm-usage',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-infobars',
+                '--window-position=0,0',
+                '--ignore-certifcate-errors',
+                '--ignore-certifcate-errors-spki-list',
+            ]
+        )
+        
+        # Create context with realistic settings
+        viewport = random.choice(VIEWPORTS)
+        user_agent = random.choice(USER_AGENTS)
+        
+        context = await browser.new_context(
+            viewport=viewport,
+            user_agent=user_agent,
+            locale='en-US',
+            timezone_id='America/New_York',
+            geolocation={'latitude': 40.7128, 'longitude': -74.0060},
+            permissions=['geolocation'],
+            java_script_enabled=True,
+        )
+        
+        # Add stealth scripts to avoid detection
+        await context.add_init_script("""
+            // Overwrite the 'webdriver' property
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined
+            });
+            
+            // Overwrite the 'plugins' property
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => [1, 2, 3, 4, 5]
+            });
+            
+            // Overwrite the 'languages' property
+            Object.defineProperty(navigator, 'languages', {
+                get: () => ['en-US', 'en']
+            });
+            
+            // Remove automation indicators
+            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+            
+            // Fake chrome runtime
+            window.chrome = {
+                runtime: {}
+            };
+            
+            // Fake permissions
+            const originalQuery = window.navigator.permissions.query;
+            window.navigator.permissions.query = (parameters) => (
+                parameters.name === 'notifications' ?
+                    Promise.resolve({ state: Notification.permission }) :
+                    originalQuery(parameters)
+            );
+        """)
+        
+        page = await context.new_page()
+        
+        try:
+            # Navigate with realistic behavior
+            logger.debug(f"Navigating to {url}...")
+            await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            
+            # Wait a bit and scroll like a human
+            await asyncio.sleep(random.uniform(1.0, 2.0))
+            
+            # Scroll down slowly
+            await page.evaluate("""async () => {
+                await new Promise(resolve => {
+                    let totalHeight = 0;
+                    const distance = 300;
+                    const timer = setInterval(() => {
+                        window.scrollBy(0, distance);
+                        totalHeight += distance;
+                        if (totalHeight >= document.body.scrollHeight / 3) {
+                            clearInterval(timer);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            }""")
+            
+            await asyncio.sleep(random.uniform(0.5, 1.0))
+            
+            # Get content
+            content = await page.content()
+            logger.debug(f"Playwright got {len(content)} chars")
+            
+            return content
+            
+        except PlaywrightTimeout as e:
+            logger.error(f"Playwright timeout: {e}")
+            raise
+        finally:
+            await browser.close()
+
+
+async def fetch_page_content(url: str) -> str:
+    """Fetch page content - tries httpx first, falls back to Playwright"""
+    logger.debug(f"Fetching page content from: {url}")
+    
+    # Try fast httpx first
+    content = await fetch_with_httpx(url)
+    
+    if content:
+        logger.debug(f"httpx succeeded, got {len(content)} chars")
+        return content[:50000]
+    
+    # Fall back to Playwright for stubborn sites
+    logger.info("httpx failed, falling back to Playwright headless browser...")
+    content = await fetch_with_playwright(url)
+    
+    # Clean up HTML if needed
+    if content:
+        # Extract main text content for better LLM processing
+        soup = BeautifulSoup(content, 'lxml')
+        
+        # Remove script and style elements
+        for element in soup(['script', 'style', 'nav', 'footer', 'header', 'aside']):
+            element.decompose()
+        
+        # Get text
+        text = soup.get_text(separator='\n', strip=True)
+        
+        # If text is too short, return raw HTML
+        if len(text) < 500:
+            return content[:50000]
+        
+        return text[:50000]
+    
+    raise Exception(f"Failed to fetch content from {url}")
 
 def extract_with_gemini(content: str) -> dict:
     logger.debug("Starting Gemini extraction...")

@@ -18,6 +18,7 @@ from playwright.async_api import async_playwright, TimeoutError as PlaywrightTim
 from bs4 import BeautifulSoup
 from curl_cffi import requests as curl_requests
 from fake_useragent import UserAgent
+import cloudscraper
 
 # Configure logging - DEBUG level for maximum verbosity
 logging.basicConfig(
@@ -184,12 +185,13 @@ If information is not clearly stated, omit it or mark confidence as "inferred".
 """
 
 # ==================== ULTRA-RESILIENT WEB SCRAPER ====================
-# 5-Layer fallback system to bypass ANY bot detection
+# 6-Layer fallback system to bypass ANY bot detection
 # Layer 1: curl_cffi (TLS fingerprint impersonation - mimics Chrome exactly)
 # Layer 2: httpx with full browser headers
-# Layer 3: Playwright with stealth mode
-# Layer 4: Playwright with human simulation
-# Layer 5: Playwright with Cloudflare/challenge bypass
+# Layer 3: Cloudscraper (JS challenge solver - no browser needed)
+# Layer 4: Playwright with stealth mode
+# Layer 5: Playwright with human simulation
+# Layer 6: Playwright with Cloudflare/challenge bypass
 # =====================================================================
 
 # Initialize fake user agent generator
@@ -344,13 +346,70 @@ async def fetch_with_httpx(url: str, max_retries: int = 2) -> str | None:
     return None
 
 
-# ==================== LAYER 3: Playwright Basic Stealth ====================
+# ==================== LAYER 3: Cloudscraper (JS Challenge Solver) ====================
+async def fetch_with_cloudscraper(url: str) -> str | None:
+    """
+    Layer 3: Cloudscraper - solves Cloudflare JS challenges without browser.
+    Uses a JS interpreter to solve challenges, much faster than Playwright.
+    """
+    logger.info(f"[Layer 3] Cloudscraper JS challenge solver: {url}")
+    
+    try:
+        # Create scraper with browser impersonation
+        scraper = cloudscraper.create_scraper(
+            browser={
+                'browser': 'chrome',
+                'platform': 'windows',
+                'desktop': True,
+            },
+            delay=random.uniform(3, 7),  # Delay to seem human
+        )
+        
+        # Run synchronous cloudscraper in executor
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            lambda: scraper.get(
+                str(url),
+                timeout=30,
+                headers={
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "DNT": "1",
+                    "Upgrade-Insecure-Requests": "1",
+                }
+            )
+        )
+        
+        if response.status_code in [403, 429, 503, 520, 521, 522, 523, 524]:
+            logger.warning(f"  Cloudscraper got {response.status_code}")
+            return None
+        
+        if response.status_code == 200:
+            content = response.text
+            # Check for Cloudflare block page indicators
+            block_indicators = ['blocked', 'captcha', 'challenge', 'attention required', 'access denied']
+            if len(content) > 500 and not any(ind in content.lower()[:2000] for ind in block_indicators):
+                logger.info(f"  [Layer 3] SUCCESS - Got {len(content)} chars")
+                return content
+            else:
+                logger.warning(f"  Cloudscraper content may be blocked page")
+        
+    except Exception as e:
+        logger.warning(f"  Cloudscraper failed: {e}")
+    
+    logger.info("  [Layer 3] FAILED - Moving to Layer 4")
+    return None
+
+
+# ==================== LAYER 4: Playwright Basic Stealth ====================
 async def fetch_with_playwright_basic(url: str) -> str | None:
     """
-    Layer 3: Playwright with basic stealth mode.
+    Layer 4: Playwright with basic stealth mode.
     Real browser but minimal human simulation.
     """
-    logger.info(f"[Layer 3] Playwright basic stealth: {url}")
+    logger.info(f"[Layer 4] Playwright basic stealth: {url}")
     
     try:
         async with async_playwright() as p:
@@ -407,23 +466,23 @@ async def fetch_with_playwright_basic(url: str) -> str | None:
             await browser.close()
             
             if len(content) > 500:
-                logger.info(f"  [Layer 3] SUCCESS - Got {len(content)} chars")
+                logger.info(f"  [Layer 4] SUCCESS - Got {len(content)} chars")
                 return content
             
     except Exception as e:
         logger.warning(f"  Playwright basic failed: {e}")
     
-    logger.info("  [Layer 3] FAILED - Moving to Layer 4")
+    logger.info("  [Layer 4] FAILED - Moving to Layer 5")
     return None
 
 
-# ==================== LAYER 4: Playwright with Human Simulation ====================
+# ==================== LAYER 5: Playwright with Human Simulation ====================
 async def fetch_with_playwright_human(url: str) -> str | None:
     """
-    Layer 4: Playwright with full human simulation.
+    Layer 5: Playwright with full human simulation.
     Mouse movements, scrolling, realistic delays.
     """
-    logger.info(f"[Layer 4] Playwright with human simulation: {url}")
+    logger.info(f"[Layer 5] Playwright with human simulation: {url}")
     
     try:
         async with async_playwright() as p:
@@ -566,23 +625,23 @@ async def fetch_with_playwright_human(url: str) -> str | None:
             await browser.close()
             
             if len(content) > 500:
-                logger.info(f"  [Layer 4] SUCCESS - Got {len(content)} chars")
+                logger.info(f"  [Layer 5] SUCCESS - Got {len(content)} chars")
                 return content
             
     except Exception as e:
         logger.warning(f"  Playwright human failed: {e}")
     
-    logger.info("  [Layer 4] FAILED - Moving to Layer 5")
+    logger.info("  [Layer 5] FAILED - Moving to Layer 6")
     return None
 
 
-# ==================== LAYER 5: Playwright Challenge Bypass ====================
+# ==================== LAYER 6: Playwright Challenge Bypass ====================
 async def fetch_with_playwright_challenge(url: str) -> str | None:
     """
-    Layer 5: Playwright with challenge/Cloudflare bypass.
+    Layer 6: Playwright with challenge/Cloudflare bypass.
     Waits for JS challenges to complete, longer timeouts.
     """
-    logger.info(f"[Layer 5] Playwright challenge bypass: {url}")
+    logger.info(f"[Layer 6] Playwright challenge bypass: {url}")
     
     try:
         async with async_playwright() as p:
@@ -669,20 +728,20 @@ async def fetch_with_playwright_challenge(url: str) -> str | None:
             if len(content) > 500:
                 # Check if we got past the challenge
                 if not any(indicator in content.lower() for indicator in challenge_indicators):
-                    logger.info(f"  [Layer 5] SUCCESS - Got {len(content)} chars")
+                    logger.info(f"  [Layer 6] SUCCESS - Got {len(content)} chars")
                     return content
             
     except Exception as e:
         logger.warning(f"  Playwright challenge failed: {e}")
     
-    logger.error("  [Layer 5] FAILED - All layers exhausted")
+    logger.error("  [Layer 6] FAILED - All layers exhausted")
     return None
 
 
 # ==================== MAIN FETCH ORCHESTRATOR ====================
 async def fetch_page_content(url: str) -> str:
     """
-    Ultra-resilient content fetcher with 5-layer fallback system.
+    Ultra-resilient content fetcher with 6-layer fallback system.
     Tries increasingly sophisticated methods until one succeeds.
     """
     logger.info(f"="*60)
@@ -699,23 +758,28 @@ async def fetch_page_content(url: str) -> str:
     if content:
         return clean_html_content(content)
     
-    # Layer 3: Playwright basic (real browser)
+    # Layer 3: Cloudscraper (JS challenge solver - no browser needed)
+    content = await fetch_with_cloudscraper(url)
+    if content:
+        return clean_html_content(content)
+    
+    # Layer 4: Playwright basic (real browser)
     content = await fetch_with_playwright_basic(url)
     if content:
         return clean_html_content(content)
     
-    # Layer 4: Playwright with human simulation
+    # Layer 5: Playwright with human simulation
     content = await fetch_with_playwright_human(url)
     if content:
         return clean_html_content(content)
     
-    # Layer 5: Playwright challenge bypass
+    # Layer 6: Playwright challenge bypass
     content = await fetch_with_playwright_challenge(url)
     if content:
         return clean_html_content(content)
     
     # All layers failed
-    raise Exception(f"Failed to fetch content from {url} - All 5 layers exhausted")
+    raise Exception(f"Failed to fetch content from {url} - All 6 layers exhausted")
 
 
 def clean_html_content(content: str) -> str:

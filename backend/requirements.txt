@@ -10,3 +10,4 @@ beautifulsoup4
 lxml
 curl_cffi
 fake-useragent
+cloudscraper

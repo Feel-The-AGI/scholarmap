@@ -256,7 +256,11 @@ async def ingest(request: Request, authorization: str = Header(None)):
     try:
         logger.debug("Starting Gemini extraction...")
         extracted = extract_with_gemini(content)
-        logger.debug(f"Extraction complete: {list(extracted.keys())}")
+        logger.debug(f"Extraction complete. Keys: {list(extracted.keys())}")
+        logger.debug(f"Extracted name: {extracted.get('name')}")
+        logger.debug(f"Extracted provider: {extracted.get('provider')}")
+        logger.debug(f"Extracted level: {extracted.get('level')}")
+        logger.debug(f"Full extraction result: {json.dumps(extracted, indent=2)[:2000]}")
     except Exception as e:
         logger.error(f"Extraction failed: {e}")
         logger.error(traceback.format_exc())
@@ -269,13 +273,13 @@ async def ingest(request: Request, authorization: str = Header(None)):
         issues.append("Low confidence extraction - manual review recommended")
     
     program_data = {
-        "name": extracted.get("name", "Unknown Program"),
-        "provider": extracted.get("provider", "Unknown"),
-        "level": extracted.get("level", "masters"),
-        "funding_type": extracted.get("funding_type", "partial"),
-        "countries_eligible": extracted.get("countries_eligible", []),
-        "countries_of_study": extracted.get("countries_of_study", []),
-        "fields": extracted.get("fields", []),
+        "name": extracted.get("name") or "Unknown Program",
+        "provider": extracted.get("provider") or "Unknown",
+        "level": extracted.get("level") or "masters",
+        "funding_type": extracted.get("funding_type") or "partial",
+        "countries_eligible": extracted.get("countries_eligible") or [],
+        "countries_of_study": extracted.get("countries_of_study") or [],
+        "fields": extracted.get("fields") or [],
         "official_url": str(ingest_request.url),
         "description": extracted.get("description"),
         "who_wins": extracted.get("who_wins"),

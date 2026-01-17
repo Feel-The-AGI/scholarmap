@@ -172,7 +172,7 @@ async def ingest(request: IngestRequest):
     supabase.table("sources").insert({
         "program_id": program_id,
         "url": str(request.url),
-        "agent_model": "gemini-2.0-flash",
+        "agent_model": "gemini-2.5-pro",
         "raw_summary": json.dumps(extracted)[:10000],
         "confidence_score": confidence
     }).execute()

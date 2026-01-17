@@ -175,6 +175,7 @@ Rules:
 - level must be exactly: bachelor, masters, phd, or postdoc
 - funding_type must be exactly: full, partial, tuition_only, or stipend_only
 - rule_type must be: gpa, degree, nationality, age, work_experience, language, or other
+- operator MUST be exactly one of: =, >=, <=, >, <, in, not_in, exists, between (NO OTHER VALUES)
 - requirement type must be: transcript, cv, essay, references, proposal, test, interview, or other
 - stage must be: application, interview, nomination, or result
 - confidence must be: high, medium, or inferred
@@ -183,6 +184,86 @@ Rules:
 
 If information is not clearly stated, omit it or mark confidence as "inferred".
 """
+
+# Valid values for database constraints
+VALID_OPERATORS = {'=', '>=', '<=', '>', '<', 'in', 'not_in', 'exists', 'between'}
+VALID_RULE_TYPES = {'gpa', 'degree', 'nationality', 'age', 'work_experience', 'language', 'other'}
+VALID_REQ_TYPES = {'transcript', 'cv', 'essay', 'references', 'proposal', 'test', 'interview', 'other'}
+VALID_STAGES = {'application', 'interview', 'nomination', 'result'}
+VALID_CONFIDENCE = {'high', 'medium', 'inferred'}
+
+def sanitize_eligibility_rule(rule: dict) -> dict | None:
+    """Sanitize eligibility rule to match database constraints. Returns None if invalid."""
+    try:
+        rule_type = rule.get('rule_type', 'other')
+        operator = rule.get('operator', 'exists')
+        confidence = rule.get('confidence', 'medium')
+        
+        # Map invalid operators to valid ones
+        operator_mapping = {
+            'has': 'exists',
+            'contains': 'in',
+            'is': '=',
+            'equals': '=',
+            'greater': '>',
+            'less': '<',
+            'minimum': '>=',
+            'maximum': '<=',
+            'required': 'exists',
+            'must': 'exists',
+        }
+        
+        if operator not in VALID_OPERATORS:
+            operator = operator_mapping.get(operator.lower(), 'exists')
+        
+        if rule_type not in VALID_RULE_TYPES:
+            rule_type = 'other'
+        
+        if confidence not in VALID_CONFIDENCE:
+            confidence = 'medium'
+        
+        return {
+            'rule_type': rule_type,
+            'operator': operator,
+            'value': rule.get('value', {}),
+            'confidence': confidence,
+            'source_snippet': rule.get('source_snippet')
+        }
+    except Exception as e:
+        logger.warning(f"Failed to sanitize eligibility rule: {e}")
+        return None
+
+def sanitize_requirement(req: dict) -> dict | None:
+    """Sanitize requirement to match database constraints."""
+    try:
+        req_type = req.get('type', 'other')
+        if req_type not in VALID_REQ_TYPES:
+            req_type = 'other'
+        
+        return {
+            'type': req_type,
+            'description': req.get('description', 'Required document'),
+            'mandatory': req.get('mandatory', True)
+        }
+    except Exception as e:
+        logger.warning(f"Failed to sanitize requirement: {e}")
+        return None
+
+def sanitize_deadline(deadline: dict) -> dict | None:
+    """Sanitize deadline to match database constraints."""
+    try:
+        stage = deadline.get('stage', 'application')
+        if stage not in VALID_STAGES:
+            stage = 'application'
+        
+        return {
+            'cycle': deadline.get('cycle', 'Unknown'),
+            'deadline_date': deadline.get('deadline_date'),
+            'stage': stage
+        }
+    except Exception as e:
+        logger.warning(f"Failed to sanitize deadline: {e}")
+        return None
 
 # ==================== ULTRA-RESILIENT WEB SCRAPER ====================
 # 6-Layer fallback system to bypass ANY bot detection
@@ -921,37 +1002,43 @@ async def ingest(request: Request, authorization: str = Header(None)):
             program_id = result.data[0]["id"]
             logger.debug(f"New program created with ID: {program_id}")
         
-        # Insert eligibility rules
+        # Insert eligibility rules (with sanitization)
         for rule in extracted.get("eligibility_rules", []):
-            logger.debug(f"Inserting eligibility rule: {rule.get('rule_type')}")
-            supabase.table("eligibility_rules").insert({
-                "program_id": program_id,
-                "rule_type": rule.get("rule_type", "other"),
-                "operator": rule.get("operator", "exists"),
-                "value": rule.get("value", {}),
-                "confidence": rule.get("confidence", "inferred"),
-                "source_snippet": rule.get("source_snippet")
-            }).execute()
+            sanitized = sanitize_eligibility_rule(rule)
+            if sanitized:
+                logger.debug(f"Inserting eligibility rule: {sanitized['rule_type']} {sanitized['operator']}")
+                supabase.table("eligibility_rules").insert({
+                    "program_id": program_id,
+                    "rule_type": sanitized["rule_type"],
+                    "operator": sanitized["operator"],
+                    "value": sanitized["value"],
+                    "confidence": sanitized["confidence"],
+                    "source_snippet": sanitized["source_snippet"]
+                }).execute()
         
-        # Insert requirements
+        # Insert requirements (with sanitization)
         for req in extracted.get("requirements", []):
-            logger.debug(f"Inserting requirement: {req.get('type')}")
-            supabase.table("requirements").insert({
-                "program_id": program_id,
-                "type": req.get("type", "other"),
-                "description": req.get("description", ""),
-                "mandatory": req.get("mandatory", True)
-            }).execute()
+            sanitized = sanitize_requirement(req)
+            if sanitized:
+                logger.debug(f"Inserting requirement: {sanitized['type']}")
+                supabase.table("requirements").insert({
+                    "program_id": program_id,
+                    "type": sanitized["type"],
+                    "description": sanitized["description"],
+                    "mandatory": sanitized["mandatory"]
+                }).execute()
         
-        # Insert deadlines
+        # Insert deadlines (with sanitization)
         for deadline in extracted.get("deadlines", []):
-            logger.debug(f"Inserting deadline: {deadline.get('stage')}")
-            supabase.table("deadlines").insert({
-                "program_id": program_id,
-                "cycle": deadline.get("cycle", "2025/2026"),
-                "deadline_date": deadline.get("deadline_date"),
-                "stage": deadline.get("stage", "application")
-            }).execute()
+            sanitized = sanitize_deadline(deadline)
+            if sanitized and sanitized.get("deadline_date"):
+                logger.debug(f"Inserting deadline: {sanitized['stage']}")
+                supabase.table("deadlines").insert({
+                    "program_id": program_id,
+                    "cycle": sanitized["cycle"],
+                    "deadline_date": sanitized["deadline_date"],
+                    "stage": sanitized["stage"]
+                }).execute()
         
         # Insert source
         logger.debug("Inserting source record...")

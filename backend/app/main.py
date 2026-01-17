@@ -2,7 +2,8 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from pydantic import BaseModel, HttpUrl
 from supabase import create_client, Client
 import httpx
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import json
 import os
 from datetime import datetime
@@ -13,6 +14,9 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 AGENT_SECRET = os.getenv("AGENT_SECRET")
+
+# Initialize Gemini client
+gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 def get_supabase() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
@@ -80,11 +84,12 @@ async def fetch_page_content(url: str) -> str:
         return response.text[:50000]
 
 def extract_with_gemini(content: str) -> dict:
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    response = model.generate_content(
-        f"{EXTRACTION_PROMPT}\n\nWebpage content:\n{content}",
-        generation_config=genai.GenerationConfig(response_mime_type="application/json")
+    response = gemini_client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=f"{EXTRACTION_PROMPT}\n\nWebpage content:\n{content}",
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json"
+        )
     )
     return json.loads(response.text)
 
@@ -167,7 +172,7 @@ async def ingest(request: IngestRequest):
     supabase.table("sources").insert({
         "program_id": program_id,
         "url": str(request.url),
-        "agent_model": "gemini-1.5-flash",
+        "agent_model": "gemini-2.0-flash",
         "raw_summary": json.dumps(extracted)[:10000],
         "confidence_score": confidence
     }).execute()

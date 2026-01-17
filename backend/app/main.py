@@ -85,7 +85,7 @@ async def fetch_page_content(url: str) -> str:
 
 def extract_with_gemini(content: str) -> dict:
     response = gemini_client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-pro",
         contents=f"{EXTRACTION_PROMPT}\n\nWebpage content:\n{content}",
         config=types.GenerateContentConfig(
             response_mime_type="application/json"
